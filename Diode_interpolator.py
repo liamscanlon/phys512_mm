@@ -107,7 +107,7 @@ def find_nearest_index(xs, xn):
 """
 takes arrays of known x valus (xs) and corsponding y values (ys) and slopes ie dy/dx (slopes) 
 and a x value (xn) for which you are trying to interpolate the corsponding y (yn)
-returns interpolated value (yn) and maybe error  
+returns interpolated value (yn)
 This is optimized to "take an arbitrary voltage and interpolate to return a temperature" so if you are planing on ploting this
 there are faster ways of going about this 
 """
