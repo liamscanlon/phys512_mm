@@ -1,0 +1,7 @@
+at x=0.7 cheb fit gives [-0.51457314] and true value is -0.5145731728297583
+chebyshev max error = 3.1969782721130713e-07 
+ormal polynomial max error = 4.334257130977903e-07
+Chebyshev has lower max error
+chebyshev rms error = 1.9716180347103307e-07 
+ormal polynomial rms error = 1.8976862743756185e-07
+but normal poly has lower rms error
