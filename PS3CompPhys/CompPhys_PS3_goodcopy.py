@@ -9,11 +9,7 @@ Created on Thu Oct 24 16:34:00 2019
 
 
 """
-HI hello Im not quite done yet and the prof wont give a stright answer on the actually due data since he gave a bunch
-information we needed for the assignment on the daya it was due so if you coud come back to this one in a day or 2 that 
-would be great
-
-
+I really cant express how much I hate everything about this
 """
 import numpy as np
 import camb
