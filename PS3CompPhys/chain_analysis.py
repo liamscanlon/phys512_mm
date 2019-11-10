@@ -35,25 +35,58 @@ poles = wmap[:,0]
 err   = wmap[:,2]
 
 
-chain1 = np.loadtxt('bettertry_params_26_18_52_58_scale0point016.txt') , np.loadtxt('bettertry_chisqs_26_18_52_58_scale0point016.txt')
-chain2 = np.loadtxt('bigsteps_params_27_0_58_19_scale0point1.txt') , np.loadtxt('bigsteps_chisqs_27_0_58_19_scale0point1.txt')
-chain3 = np.loadtxt('bigsteps_params_27_1_22_34_scale0point1.txt') , np.loadtxt('bigsteps_chisqs_27_1_11_53_scale0point1.txt')
-chain4 = np.loadtxt('bigsteps_params_27_1_11_53_scale0point1.txt') , np.loadtxt('bigsteps_params_27_1_11_53_scale0point1.txt')
+chain1 = np.loadtxt('long_params_2_18_22_12_scale[0point6   0point525 0point6   0point45  0point525 0point525].txt') , np.loadtxt('long_chisqs_2_18_22_12_scale[0point6   0point525 0point6   0point45  0point525 0point525].txt')
+chain2 = np.loadtxt('c_params_2_19_33_13_scale[0point54   0point468  0point54   0point387  0point477  0point4725].txt') , np.loadtxt('c_chisqs_2_19_33_13_scale[0point54   0point468  0point54   0point387  0point477  0point4725].txt')
+chain3 = np.loadtxt('d_params_2_21_58_16_scale[0point6   0point52  0point6   0point27  0point525 0point525].txt') , np.loadtxt('d_chisqs_2_21_58_16_scale[0point6   0point52  0point6   0point27  0point525 0point525].txt')
+chain4 = np.loadtxt('e_params_3_0_49_7_scale[0point54  0point48  0point54  0point37  0point477 0point473].txt') , np.loadtxt('e_chisqs_3_0_49_7_scale[0point54  0point48  0point54  0point37  0point477 0point473].txt')
+chain5 = np.loadtxt('f_params_3_14_26_7_scale0point5.txt') , np.loadtxt('f_chisqs_3_14_26_7_scale0point5.txt')
+chain6 = np.loadtxt('g_params_3_15_33_6_scale0point35.txt') , np.loadtxt('g_chisqs_3_15_33_6_scale0point35.txt')
+chain7 = np.loadtxt('h_params_3_15_37_32_scale0point35.txt') , np.loadtxt('h_chisqs_3_15_37_32_scale0point35.txt')
 
 
 
 
+"""
+The idea here is to weight a chain you already have with the new known tau with error
+first you updata the chi^2 using the new tau with error 
+if the updated chi^2 is better you keep it if not you do the same probability thing we did for the normal mcmc chain
+"""
+def update_chisqs(chainp3s,chain_chis):
+    p3 =  0.0544
+    ep3 = 0.0073
+    newchis = chain_chis + ((chainp3s-p3)/ep3)**2
+    return newchis
 
-checkp = 2
 
-plt.plot(chain1[0][:,checkp])
-plt.plot(chain2[0][:,checkp])
-plt.plot(chain3[0][:,checkp])
-plt.plot(chain4[0][:,checkp])
+def updatechain(newchis,oldchis):
+    keep = [True] * len(newchis)
+    keep = np.asanyarray(keep)
+    for i in range(1,len(newchis)):
+        dchi = newchis[i]-oldchis[i]
+        if dchi>0:
+            prob = np.exp(-0.5*dchi)
+            if np.random.rand()>prob:
+                keep[i] = False
+    return keep
 
 
+oldchis = chain7[1]
+newchis = update_chisqs(chain7[0][:,3],oldchis)
+keeparray = updatechain(newchis,oldchis)
+newchain   = np.delete(chain7[0],np.where(keeparray == False),axis=0)
 
+#here is the fit with the updated chain also the 
+newfit = get_spectrum(np.mean(newchain,axis=0))          
+newfir_chisq = np.sum(((data-newfit)/err)**2)
+newfit_ps = np.mean(newchain,axis=0)
+newfit_perr = np.std(newchain,axis=0)
 
-for i in range(6):
-    plt.plot(chain1[0][:,i]/chain1[0][0,i],label = str(i))
+##this plots the chain paramas divided by the starting value
+
+plt.plot(chain7[0][:,0]/(chain7[0][0,0]),'.',label = 'H0 normed')
+plt.plot(chain7[0][:,1]/(chain7[0][0,1]),'*',label = 'wb normed')
+plt.plot(chain7[0][:,2]/(chain7[0][0,2]),'^',label = 'wc normed')
+plt.plot(chain7[0][:,3]/(chain7[0][0,3]),'<',label = 'T normed')
+plt.plot(chain7[0][:,4]/(chain7[0][0,4]),'>',label = 'As normed')
+plt.plot(chain7[0][:,5]/(chain7[0][0,5]),'o',label = 'ns normed')
 plt.legend()
