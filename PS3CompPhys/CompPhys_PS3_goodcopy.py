@@ -5,6 +5,16 @@ Created on Thu Oct 24 16:34:00 2019
 @author: liams
 """
 
+
+
+
+"""
+HI hello Im not quite done yet and the prof wont give a stright answer on the actually due data since he gave a bunch
+information we needed for the assignment on the daya it was due so if you coud come back to this one in a day or 2 that 
+would be great
+
+
+"""
 import numpy as np
 import camb
 from matplotlib import pyplot as plt
@@ -76,54 +86,78 @@ def lm_fitter(data, err, p0,func = get_spectrum,max_runs=100):
         rhs = J.transpose()*w*r
         dp  = np.linalg.inv(lhs) * rhs
         dp  = np.squeeze(np.array(dp))
-        fit_new = func(p+dp)
+        newp = p+dp
+       
+#        if newp[3] <= 0:
+#            lamb = 10*lamb
+#            continue
+        fit_new = func(newp)
         chisq_new  = calc_chisq(data,fit_new,err)
         d_chisq = chisq_new - chisq
         if d_chisq >= 0:
+#            if lamb < 5E4:
+#                lamb = 1
             lamb = 10*lamb
         else:
             lamb = lamb*0.2
-            if d_chisq > -0.01:
-                print('Convergence with params = {} \n chi^2 = {}'.format(p,chisq))
+            if d_chisq > -0.09:
+                print('Convergence with params = {} \n chi^2 = {}'.format(newp,chisq_new))
+                fit = fit_new
+                p = newp
+                chisq = chisq_new
                 break
         fit = fit_new
-        p = p + dp
+        p = newp
         chisq = chisq_new
         print('new params are: {} \n with chi^2 = {} \n change in chi^2 = {} \n lambda = {} '.format(p,chisq,d_chisq,lamb))
     return p, chisq
 
 
-#starting params with the help param omitted 
+#starting params with the held param omitted 
 p1=np.asarray([65,0.02,0.1,2e-9,0.96])
 
 
-#ih=3
-#ph=0.05
-#fit_ps , chi_sq = lm_fitter(data,err,p1,func=holdp_get_spectrum(ih=ih,ph=ph),max_runs=100)
-#fit_ps = np.insert(fit_ps,ih,ph)
-#fit = get_spectrum(fit_ps)
-#w = np.matrix(np.eye(len(err))*1/err**2)
-#J = np.matrix(calc_J(fit_ps,p0/100))
-##computes covarience matrix
-#Cv = np.linalg.inv(J.transpose() *w* J)
-#Cv = np.asarray(Cv)
-#np.savetxt('CoVarM.txt',Cv)
-##in theory this is the errors on the fit 
-#p_errs = np.diag(Cv)
-##plots fit over data
-##plt.xlabel('$l$')
-##plt.plot(poles,data,label = 'data')
-##plt.plot(poles,fit , label = 'fit')
-##plt.legend()
-#np.savetxt('CoVarM.txt',Cv)
+ih=3
+ph=0.05
+fit_ps_holdT , chi_sq_holdT = lm_fitter(data,err,p1,func=holdp_get_spectrum(ih=ih,ph=ph),max_runs=100)
+fit_ps_holdT = np.insert(fit_ps_holdT,ih,ph)
+lmFit_holdT  = get_spectrum(fit_ps_holdT)
+w = np.matrix(np.eye(len(err))*1/err**2)
+J_holdT = np.matrix(calc_J(fit_ps_holdT,p0/200))
+#computes covarience matrix
+Cv_holdT = np.linalg.inv(J_holdT.transpose() *w* J_holdT)
+Cv_holdT = np.asarray(Cv_holdT)
+p_errs_holdT = np.diag(Cv_holdT)
+print('held tau fit give parameters of \n  {} \n with errors of {} \n chi^2 = {}'.format(fit_ps_holdT,p_errs_holdT,chi_sq_holdT))
+
+
+
+fit_ps , chi_sq = lm_fitter(data,err,fit_ps_holdT,func=get_spectrum,max_runs=100)
+
+fit = get_spectrum(fit_ps)
+J = np.matrix(calc_J(fit_ps,p0/100))
+#computes covarience matrix
+Cv = np.linalg.inv(J.transpose() *w* J)
+Cv = np.asarray(Cv)
+#in theory this is the errors on the fit 
+p_errs = np.diag(Cv)
+print('free params fit give parameters of \n {} \n with errors of {} \n chi^2 = {}'.format(fit_ps,p_errs,chi_sq))
+
+
+plt.plot(poles,data,label = 'data')
+plt.plot(poles,fit,label='LM fit free params')
+plt.plot(poles,lmFit_holdT,label='LM fit tau held')
+plt.legend()
+plt.xlabel('l (pole index)')
+plt.ylabel('CMB power spec') 
+
+
 
 #generates random step for mcmc for given covar matrix
 def rand_step(Cv):
     chosky = np.linalg.cholesky(Cv)
-    #here I hacked it to have a lower step size for tau because there seems to be a local 
-    #min at tau lower that we are looking for and I dont feel like wasting more time running chains
-    return np.asarray(np.dot(chosky,np.random.randn(Cv.shape[0])))#*np.array([1,1,1,1/6,1,1]))
-    #return [6.5e-01, 2.0e-04, 1.0e-03, 5.0e-04, 2.0e-11, 9.6e-03]*np.random.randn(Cv.shape[0])/10
+    return np.asarray(np.dot(chosky,np.random.randn(Cv.shape[0])))
+
 
 
 def mcmc(data,err,p0,Cv,n_steps=100,step_scale= 0.02,chainname='Chain_',saveAfter = 50):
@@ -147,12 +181,11 @@ def mcmc(data,err,p0,Cv,n_steps=100,step_scale= 0.02,chainname='Chain_',saveAfte
     
     #loop for MCMC
     for i in range(1,n_steps):
+        t1 = time.time()
         print('step # = {} out of {}'.format(i,n_steps))
         #calls the random step function and adds to current params 
         #after being scaled by scaling factor to get the new "test' params
         p_test     = p_now + step_scale*rand_step(Cv)
-        #prints the current test params
-        #print('test p = {}'.format(p_test))
         #catches any exptions from the camb and sets that guess to be a "bad" step if it can't
         #compute a fit for the given test params
         try:
@@ -166,10 +199,12 @@ def mcmc(data,err,p0,Cv,n_steps=100,step_scale= 0.02,chainname='Chain_',saveAfte
         #throws out any guess that have tau less that 0
         if p_test[3] < 0:
             accept_test = False
+            failcount = failcount + 1
         else:
             #if chi^2 is improved (goes down) from current params step is set to be accepted
             if d_chisq<0:
                 accept_test = True
+                
             else:
                 #if chi^2 is not imporved (goes up) from current params probability of step 
                 #being accepted is determined by boltzmann stats
@@ -182,12 +217,6 @@ def mcmc(data,err,p0,Cv,n_steps=100,step_scale= 0.02,chainname='Chain_',saveAfte
                     #because the step size is probs to big
                     accept_test = False
                     failcount = failcount + 1
-                    if (failcount/i > 0.87 ) and i>n_steps*(0.667):
-                        print('step size probs too big...')
-                        #changes the name of the soon to be saved chain 
-                        #to indicate that the chain was cut short
-                        chainname = chainname+'cutShort'
-                        break
         #prints the acceptance status of current test step
         print('step accepted = {}'.format(accept_test))
         print('current accept rate = {}  look for 0.25'.format(1 - failcount/(i)))
@@ -195,6 +224,7 @@ def mcmc(data,err,p0,Cv,n_steps=100,step_scale= 0.02,chainname='Chain_',saveAfte
         if accept_test==True: 
             p_now     = p_test
             chisq_now = chisq_test
+            print('chi^2=' + str(chisq_now))
         #adds accepted param  to params array
         pars[i,:] = p_now
         #^^^ like this but for the chisq
@@ -205,15 +235,18 @@ def mcmc(data,err,p0,Cv,n_steps=100,step_scale= 0.02,chainname='Chain_',saveAfte
             #saves the params and chisq arrays to a txt file 
             np.savetxt(genFileName(t,step_scale,chainname=chainname, pORc='p'),pars[:i,:])
             np.savetxt(genFileName(t,step_scale,chainname=chainname,pORc='c'),chisqs[:i])
+         
             #plt.plot(pars[:i,:])
+        print('time for step = {} , projected time = {}'.format(time.time()-t1, (time.time()-t1)*(n_steps-i) ))
         print('*************************************')
     #saves the chains param's and chisqs
     print('done, saving to files...')        
     np.savetxt(genFileName(t,step_scale,chainname=chainname,pORc='p'),pars)
     np.savetxt(genFileName(t,step_scale,chainname=chainname,pORc='c'),chisqs)
     #returns the chain's params and chisqs
-    acceptrate = 1- failcount/(n_steps-1)
+    acceptrate = 1- failcount/(n_steps)
     print('final accept rate  = {} \n ideal accept rate is 0.25'.format(acceptrate))
+    
     return pars,chisqs
 
 
@@ -228,59 +261,34 @@ def genFileName(t,step_scale,chainname = '',  pORc = 'p'):
     return fn
 
 #loads the covar matrix so  from lm fit so I dont need to do it every time
-fit_CoVarM = np.loadtxt('CoVarM.txt')
+#fit_CoVarM = np.loadtxt('CoVarM.txt')
 
 #
-lastchain = np.loadtxt('bettertry_params_26_18_52_58_scale0point016.txt')
-lm_fit_p = lastchain[0,:]
+#lastchain = np.loadtxt('bettertry_params_26_18_52_58_scale0point016.txt')
+lm_fit_p = np.array([6.71878134e+01, 2.18484550e-02, 1.11019110e-01, 4.95000000e-02,1.98489097e-09, 9.40835003e-01])
+newp0 = np.array([7.02832046e+01, 2.29083013e-02, 1.12626487e-01, 5e-02,2.05178292e-09, 9.73583264e-01])
 
-chainname = 'verybigsteps'
-step_scale = 0.12
-n_steps = 500
-saveAfter = 50
+Covary = np.array([[ 1.28610417e+01,  2.33347574e-03, -2.32944232e-02,
+         3.83994796e-01,  1.42762577e-09,  7.93630402e-02],
+       [ 2.33347574e-03,  6.73477492e-07, -3.26707341e-06,
+         8.96715058e-05,  3.51707810e-13,  1.93549067e-05],
+       [-2.32944232e-02, -3.26707341e-06,  4.91097294e-05,
+        -6.55470216e-04, -2.34918455e-12, -1.27324790e-04],
+       [ 3.83994796e-01,  8.96715058e-05, -6.55470216e-04,
+         2.07195622e-02,  8.05521974e-11,  3.11973351e-03],
+       [ 1.42762577e-09,  3.51707810e-13, -2.34918455e-12,
+         8.05521974e-11,  3.14803359e-19,  1.20935324e-11],
+       [ 7.93630402e-02,  1.93549067e-05, -1.27324790e-04,
+         3.11973351e-03,  1.20935324e-11,  6.48668930e-04]])
 
+chain = mcmc(data,err,newp0,Cv,n_steps=100,step_scale= 0.5,name = 'newcovar',saveAfter = 50)
+     
+    
+p3 =  0.0544
+ep3 = 0.0073
+newp0[3] = p3
+fixedtauchain = mcmc(data,err,newp0,Cv,n_steps=100,name ='fixedtau',step_scale= 0.5*np.array([1,1,1,0,1,1]),saveAfter = 50)
 
-mcmcpars , mcmcchisqs = mcmc(data,err,p0=lm_fit_p,Cv=fit_CoVarM,n_steps=n_steps,step_scale= step_scale,chainname=chainname,saveAfter=saveAfter)
-
-
-#plt.plot(mcmcpars[:,0],mcmcpars[:,2],'*')
-
-mcmcpars2 , mcmcchisqs2 = mcmc(data,err,p0=mcmcpars[-1,:],Cv=fit_CoVarM,n_steps=n_steps,step_scale= step_scale,chainname=chainname,saveAfter=saveAfter)
-
-
-
-mcmcpars3 , mcmcchisqs3 = mcmc(data,err,p0=p0,Cv=fit_CoVarM,n_steps=n_steps,step_scale= step_scale,chainname=chainname,saveAfter=saveAfter)
-mcmcpars4 , mcmcchisqs4 = mcmc(data,err,p0=mcmcpars[-1,:],Cv=fit_CoVarM,n_steps=n_steps,step_scale= step_scale,chainname=chainname,saveAfter=saveAfter)
-
-mcmcpars5 , mcmcchisqs5 = mcmc(data,err,p0=p0,Cv=fit_CoVarM,n_steps=n_steps,step_scale= step_scale,chainname=chainname,saveAfter=saveAfter)
-
-mcmcpars6 , mcmcchisqs6 = mcmc(data,err,p0=mcmcpars5[25,:],Cv=fit_CoVarM,n_steps=n_steps,step_scale= step_scale,chainname=chainname,saveAfter=saveAfter)
-mcmcpars6 , mcmcchisqs6 = mcmc(data,err,p0=mcmcpars5[25,:],Cv=fit_CoVarM,n_steps=n_steps,step_scale= step_scale,chainname=chainname,saveAfter=saveAfter)
-
-mcmcpars7 , mcmcchisqs7 = mcmc(data,err,p0=lm_fit_p,Cv=fit_CoVarM,n_steps=n_steps,step_scale= step_scale,chainname=chainname,saveAfter=saveAfter)
-
-plt.plot(np.abs(np.fft.fft(mcmcpars4[:,0])),label = 'H0 normed')
-
-
-
-
-plt.plot(mcmcpars5[:,0]/(mcmcpars4[0,0]),label = 'H0 normed')
-plt.plot(mcmcpars5[:,1]/(mcmcpars4[0,1]),label = 'wb normed')
-plt.plot(mcmcpars5[:,2]/(mcmcpars4[0,2]),label = 'wc normed')
-plt.plot(mcmcpars5[:,3]/(mcmcpars4[0,3]),label = 'T normed')
-plt.plot(mcmcpars5[:,4]/(mcmcpars4[0,4]),label = 'As normed')
-plt.plot(mcmcpars5[:,5]/(mcmcpars4[0,5]),label = 'ns normed')
-plt.legend()
-
-
-
-
-
-pmcmcfit4=np.array([np.mean(mcmcpars4[:,0]),np.mean(mcmcpars4[:,1]),np.mean(mcmcpars4[:,1]),np.mean(mcmcpars4[:,2]),np.mean(mcmcpars4[:,3]),np.mean(mcmcpars4[:,4]),np.mean(mcmcpars4[:,5])])
-#np.savetxt(genFileName(time.localtime(),step_scale,chainname=chainname,pORc='p'),mcmcpars)
-
-
-
-#chosky = np.linalg.cholesky(Covar)
-#print(np.asarray(np.dot(chosky,np.random.randn(Covar.shape[0]))))
-
+Cvnew = Cv.copy()
+Cvnew[3,3] = ep3
+othertauchain = mcmc(data,err,newp0,Cv,n_steps=100,name = 'weirdtau' ,step_scale= 0.5,saveAfter = 50)
