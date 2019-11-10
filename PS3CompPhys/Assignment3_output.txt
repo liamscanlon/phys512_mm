@@ -31,3 +31,10 @@ held tau fit give parameters of:
 with errors of: 
 [1.27061066e+01 6.67940422e-07 4.81610989e-05 2.06772270e-02 3.14360629e-19 6.41978434e-04] 
 chi^2 = 1229.9104489015835
+
+
+
+
+I have included a plot of one of my chains it is really long but it didnt coverge because of the step size problems from the corvarence matrix. it is also the chain I used for the "updated chain" in the chain analysis code. though it wasnt great I think once I got rid of most of the really big or really small taus the fit isnt so bad. on that note the errors for the updated fit parmas are just the std of the given params because at enough of the points where cut out that the steps are pretty much unrelated to eachother.
+
+
