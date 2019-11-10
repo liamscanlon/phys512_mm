@@ -1,0 +1,33 @@
+some notes:
+there are a few things I did wrong at the begianing as because these chains take so long Im not going to have time to run
+everything agian so I will go over what I should have done:
+
+1) I was using the wrong covarance matrix for most of the chains (using the one from the LM fit where tau is held rather than when floated) this makes the chains take a really long time to converge. I was doing this because I was getting errors when taking inverse to get the covarence matrix. This is because there is a minimum in the chi^2 surface with a negative tau that the fitter 
+will fall into if you arent carefull which will screw everything up.
+
+2) when doing the chains I should have recast the varyables because as they are defined now the covarience isnt linear between tau and As so doing something where you fit to tau in a exponentail 
+would have fix the remaining convergence issues I was having
+
+3) Testing convergences can be done by looking at the chain parameters in frequency domain. the FT should look flat at the low frequencies then decrease like a power law. I didnt bother with this because non of these converged(or maybe I did I just didnt update this part). (would probs be a good idea to window it first)
+
+4) last mistake was not having a fast enough computer for this to be able to debug quickly enough to have finished it in time but I guess things being easier for people with more money is a good 
+life lesson. 
+
+
+Asignment #3 output:
+
+
+starting params gives chi^2 = 1588.2376532931526
+
+
+free params fit give parameters of: 
+[6.69146968e+01 2.17813575e-02 1.11464967e-01 3.13840539e-02 1.91766768e-09 9.38575246e-01] 
+with errors of:
+[9.30365673e+00 4.93260492e-07 3.84450420e-05 2.01135564e-02 2.91174499e-19 4.10252825e-04] 
+and chi^2 = 1229.8777584901047
+
+held tau fit give parameters of: 
+[6.85228596e+01, 2.22711854e-02, 1.13151082e-01, 5.00000000e-02, 2.02514538e-09, 9.60035036e-01]
+with errors of: 
+[1.27061066e+01 6.67940422e-07 4.81610989e-05 2.06772270e-02 3.14360629e-19 6.41978434e-04] 
+chi^2 = 1229.9104489015835
