@@ -10,8 +10,7 @@ would have fix the remaining convergence issues I was having
 
 3) Testing convergences can be done by looking at the chain parameters in frequency domain. the FT should look flat at the low frequencies then decrease like a power law. I didnt bother with this because non of these converged(or maybe I did I just didnt update this part). (would probs be a good idea to window it first)
 
-4) last mistake was not having a fast enough computer for this to be able to debug quickly enough to have finished it in time but I guess things being easier for people with more money is a good 
-life lesson. 
+
 
 
 Asignment #3 output:
