@@ -195,7 +195,10 @@ def doubleGridRes(lr):
         for j in range(ni):
             hr[2*i:2*(i+1),2*j:2*(j+1)] = lr[i,j]
     return hr
-
+"""
+n0 is the initial resolution nres is the number of times you want to double n0 maskfunc let you put different shaped conductor in the box
+with a bool mask of the shape
+"""
 def conjGrad_varRes(n0 ,nres,r,a, maskFunc = circle2Mask ,showplot = False ,residcutoff = 0.000001):
     V = np.zeros([n0,n0])
     n = n0
@@ -225,7 +228,7 @@ def lumpCircle2mask(r,n,a,mask):
     circle2Mask(r,n,a,mask)
     lumpifyCirc(r,n,a,mask)
     
-    
+#calculates the gradaint and the magnitude of the grad. usewd for the electric feild calculations
 def grad(V):
     kx = (1/2)*np.array([[0,0,0],[1,0,-1],[0,0,0]])
     ky = (1/2)*np.array([[0,1,0],[0,0,0],[0,-1,0]])
@@ -268,7 +271,7 @@ trying to solve:
 
 
 
-
+#dx is size x units, dt is size of time steps, n_*step's are the number of x or t steps k related to thermal conductivity, g is rate the T increases
 def heatSolver(dx,dt,n_tstep,n_xstep,k,g):
     x = np.arange(0,n_xstep*dx,dx)#set up the x points
     t = np.arange(0,n_tstep*dt,dt)#set up times 
@@ -283,11 +286,19 @@ def heatSolver(dx,dt,n_tstep,n_xstep,k,g):
 
 #physical unit stuff 
 a = 100#sidelength in physical units (e.g. m, mm , km)
-r = 20#radius inphysical units 
+r = 20#radius in physical units 
 #"grid" unit stuff
 #side length in grid units
-n = 2**9
+n = 2**9# this is a power of 2 because it makes easier to compare the var res part easier since it can only deal with doubled resolutions. 
 
+
+
+
+"""
+I have all the code for the calculations commented because it seems like everyone is working in vastly differnet 
+environments so please just uncomment as needed I have plots in the folder which Im sure you have seen by now so it should not 
+be that needed
+"""
 
 
 """
