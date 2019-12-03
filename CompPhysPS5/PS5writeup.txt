@@ -1,0 +1,90 @@
+CompPhys 
+Liam Scanlon
+260687833
+1) 
+n120_relaxation_Charge:
+This plot shows the charge dencity from relaxation method with grid resolution of 120x120
+-normally we would expect all the charge dencity to lay on the surface of a conducxtor held 
+at a constant voltage, because of the finite resolution the charge actually sits of a (blocky) ring with a radius 1 grid length greater than the conductor. 
+
+By nature of the simulation (and my impatience) the potentail isn't fully "relaxed" so there is still small charge dencity away from the conductor. there is also charge bulidup on the boundry.
+To get the the charge per unit length I added up the charge dencity within (which is zero as imposed by the relaxation method so) and in the ring of charge dencity around it to get the conductor. since we have already simpilified the problem to 2D we are effectivly working with crossectional area of cylinder (can think of it as having length dL) so the sum of rho_circle, will just be sum of the charge on conductor (in 2d) or the linear charge dencity in 3d.
+
+
+Here is how I calculated it
+chargemask =  np.zeros([nr-2,nr-2],dtype =bool)
+circle2Mask(r+ a/nr , nr,a , chargemask)
+lamb = np.sum(rho_r[chargemask])
+print(lamb)
+
+-8.632797389702901 in natural units
+(I think  I may have a bug or an algebra mistake somewhere in here tho)
+
+
+
+Comparing analytic V to simulation result:
+in the Theory vs sim plot shows the simulated (in blue) and the theory (for right half outside of conductor). To begin with I am 99% sure I am off by a constant but regardless the "analytic" solution to this doesnt really apply since the voltage at the outside edge is held at 0 to the the Voltage distrubution will go to zero at the edge to satisfy the boundry conditions.
+
+
+2) 
+
+comparing relaxation to ConjGrad:
+running both with same resolution and convergence threshold gives:
+
+relaxation method takes 0.1998882293701172s for 120 by 120 with residualcutoff of 1e-05 
+CG convergence after 101 interations
+ConjGrad method takes 0.0739595890045166s for 120 by 120 with residualcutoff of 1e-05 
+
+So yeah obs the ConjGrad method is faster
+I have plots saved to show that the give pretty much same voltage distrubution 
+
+
+3) comparing variable resolution to simple conjGrads:
+
+
+running both (with some timing code and print outs gives):
+	
+standard CG method takes 7.811069965362549s for 512 by 512 with residual cutoff of 1e-05 
+variable res ConjGrad method takes 0.25785255432128906s for 512 by 512 with residual cutoff of 1e-05 
+
+the varRes methode shortens the time by almost 2 orders of magnitude!!!
+wow such fast 
+many quck 
+so zoom 
+
+
+4) comparing electric feild of smooth and lumpy wire:
+
+max electric feild on smooth wire = 0.028943063102900762
+max electric feild on lumpy wire = 0.02067440436779118
+again these are in some what arbitry units (well at least Im to lazy to add the constants in the right place) but from this you can see that the max elextric feild with a lumpy wire is almost 50% greater than the smooth wire. so yeah its good that the wires are smooth and not lumpy.
+
+5) Heat flow plots have the colour representing temperature.
+you need to make sure that CFL condition is satisfied or the simulation will not be happy!
+the 2 regemes would be the steady state and the non steady state.
+
+steady state means that the system has time to respond to the change in temperature before 
+it is effected by the temperature increasing again:
+dT/dt ~ 0 
+in my case that would mean that g is small and k is big. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
