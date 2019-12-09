@@ -563,7 +563,7 @@ Notes:
      Also I spent way to long trying to save these as .gif or .mp4 files but this ended up being such a pain that I gave up so 
      Im sorry but you will probs have to run the code yourself. I tried to make it easy for you I really did :(
 
-    In closing please be kind I really need to pass this course. 
+  
 
 
 
